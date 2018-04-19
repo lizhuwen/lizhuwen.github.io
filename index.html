@@ -283,6 +283,225 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://lizhuwen.top/2018/04/18/Scapy-腾讯招聘/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="龙猫">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不问归期">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/04/18/Scapy-腾讯招聘/" itemprop="url">Scapy-腾讯招聘</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-18T16:30:00+08:00">
+                2018-04-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="腾讯招聘"><a href="#腾讯招聘" class="headerlink" title="腾讯招聘"></a>腾讯招聘</h2><p>腾讯招聘url：<a href="http://hr.tencent.com/position.php" target="_blank" rel="noopener">http://hr.tencent.com/position.php</a><br></p>
+<blockquote>
+<p>item.py中添加如下代码</p>
+</blockquote>
+<pre><code>import scrapy
+class TencentItem(scrapy.Item):
+    # define the fields for your item here like:
+    # name = scrapy.Field()
+    #职位名
+    positionName =scrapy.Field()
+    #职位链接
+    positionLink =scrapy.Field()
+    #职位类型
+    positionType =scrapy.Field()
+    #职位人数
+    positionNumber =scrapy.Field()
+    #工作地点
+    workLocation =scrapy.Field()
+    #发布时间
+    publishTime =scrapy.Field()
+</code></pre>
+
+<blockquote>
+<p>在spiders目录下新建一个自定义tencent.py</p>
+</blockquote>
+<pre><code>import scrapy
+from Tencent.items import TencentItem
+class TencentSpider(scrapy.Spider):
+    name = 'tencent'
+    allowed_domains = ['tencent.com']
+    url = "http://hr.tencent.com/position.php?&start="
+    offset = 0
+    start_urls = [url+str(offset)]
+    def parse(self,response):
+        node_list = response.xpath('//tr[@class="even"] | //tr[@class="odd"]')
+        for node in node_list:
+            item = TencentItem()
+            item['positionName'] = node.xpath("./td[1]/a/text()").extract()[0]#.encode("utf-8")
+            item['positionLink'] = node.xpath("./td[1]/a/@href").extract()[0]#.encode("utf-8")
+            try:
+                item['positionType'] =node.xpath("./td[2]/text()").extract()[0]#.encode("utf-8")
+            except:
+                item['positionType'] = ''
+             item['positionNumber'] = node.xpath("./td[3]/text()").extract()[0]#.encode("utf-8")
+             item['workLocation'] = node.xpath("./td[4]/text()").extract()[0]#.encode("utf-8")
+             item['publishTime'] = node.xpath("./td[5]/text()").extract()[0]#.encode("utf-8")
+             print(item)
+             yield item
+        if len(response.xpath("//a[@class='noactive' and @id='next']")) == 0:
+            url = response.xpath("//a[@id='next']/@href").extract()[0]
+            yield scrapy.Request("http://hr.tencent.com/"+ url, callback=self.parse)
+
+
+</code></pre>
+
+<blockquote>
+<p>在pipelines.py：添加如下代码</p>
+</blockquote>
+<pre>
+<code>
+import json
+class TencentPipeline(object):
+    def __init__(self):
+        #在初始化方法中打开文件
+        self.fileName = open("tencent.json",'wb')
+    def process_item(self, item, spider):
+        #吧数据转化为字典再转换成json
+        text = json.dumps(dict(item),ensure_ascii=False)+"\n"
+        self.fileName.write(text.encode('utf-8'))
+        return item
+    def close_spider(self,spider):
+        #关闭时关闭文件
+        self.fileName.close()
+</code>
+</pre>
+
+<blockquote>
+<p>settings.py:添加如下代码（启用组件）</p>
+</blockquote>
+<pre>
+<code>
+ITEM_PIPELINES = {
+    'tutorial.pipelines.JsonWriterPipeline': 300,
+}
+</code>
+</pre>
+
+<blockquote>
+<p>运行scrapy，进入项目的根目录，执行下列命令启动spider:</p>
+</blockquote>
+<pre><code>
+scrapy crawl tencent
+</code></pre>
+
+<blockquote>
+<p>看到tencent.json里面已经有了数据<br><img src="/images/pasted-0.png" alt="upload successful"></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+    <div>
+     
+    </div>
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://lizhuwen.top/2018/04/12/hello-world/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -447,7 +666,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">2</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -529,7 +748,7 @@
 
 <div class="theme-info">
   <div class="powered-by"></div>
-  <span class="post-count">博客全站共78字</span>
+  <span class="post-count">博客全站共470字</span>
 </div>
 
         
